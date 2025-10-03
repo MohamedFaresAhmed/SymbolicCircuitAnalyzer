@@ -1,4 +1,4 @@
-\#Symbolic Circuit Analyzer
+\# Symbolic Circuit Analyzer
 
 
 
@@ -8,7 +8,7 @@ This project provides a MATLAB-based symbolic circuit analysis tool. It automate
 
 
 
-\##Features
+\## Features
 
 * Symbolic derivation of transfer functions between any chosen input and output nodes.
 * Calculation of resistance, capacitance, and impedance at any specified node.
@@ -19,7 +19,7 @@ This project provides a MATLAB-based symbolic circuit analysis tool. It automate
 
 
 
-\##Requirements
+\## Requirements
 
 MATLAB R2021a or later (Symbolic Math Toolbox required).
 
