@@ -1,0 +1,10 @@
+M7 (IBIAS IBIAS VDD VDD) pch w=3.2u l=500.0n
+M6 (net014 IBIAS VDD VDD) pch w=4.1u l=500.0n
+M2 (VOUT IBIAS VDD VDD) pch w=14.5u l=500.0n
+M1 (net012 VINN net014 VDD) pch w=11.6u l=1u
+M0 (net017 VINP net014 VDD) pch w=11.6u l=1u
+M5 (net017 net012 GND GND) nch w=W l=1.2u
+M4 (VOUT net017 GND GND) nch w=4u l=250.00n
+M3 (net012 net012 GND GND) nch w=W l=1.2u
+C0 (net025 VOUT) capacitor c=CC
+R0 (net025 net017) resistor r=RZ

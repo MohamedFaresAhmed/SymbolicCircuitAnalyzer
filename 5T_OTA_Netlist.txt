@@ -1,0 +1,11 @@
+M1 (net22 net22 vdd vdd) pch w=W3 l=L3
+M0 (out net22 vdd vdd) pch w=W3 l=L3
+M5 (net16 net09 0 0) nch w=2*W2 l=L2
+M4 (net22 in2 net16 0) nch w=W1 l=L1
+M3 (net09 net09 0 0) nch w=W2 l=L2
+M2 (out in1 net16 0) nch w=W1 l=L1
+I10 (vdd net09) isource dc=IB type=dc
+V0 (in1 0) vsource dc=600.0m mag=-500m type=dc
+V1 (in2 0) vsource dc=600.0m mag=500m type=dc
+V2 (vdd 0) vsource dc=1.2 type=dc
+C0 (out 0) capacitor c=CL

@@ -1,0 +1,30 @@
+Circuit Construction & Modeling:
+
+add_ind – Add inductor (for RLC and RF circuits).
+add_opamp – Add ideal op-amp (for analog/mixed signal circuits).
+add_subckt – Add subcircuit block (hierarchical design).
+add_bjt - Add BJT small signal model
+
+
+Analysis Functions:
+
+get_sensitivity – Sensitivity of transfer function wrt component variations.
+get_group_delay – Symbolic group delay from TF.
+get_loop_gain - Symbolic loop gain TF.
+get_cl_loop_gain - Symbolic closed loop gain TF.
+
+
+
+
+Netlist / Simulation Management:
+
+%%%
+
+
+
+
+Utility / Advanced Features:
+
+simplify_fractional_tf – Special simplifier for TF numerator/denominator separately.
+latex export – Export symbolic results to LaTeX code for papers.
+plot_tf – Direct plotting of TF magnitude/phase from symbolic form.

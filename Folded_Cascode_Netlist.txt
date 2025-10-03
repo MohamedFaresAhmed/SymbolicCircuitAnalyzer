@@ -1,0 +1,14 @@
+M8 (VOUTN VCASCP net31 AVDD) pch w=WcasP l=LcasP
+M7 (net34 VINP net21 net21) pch w=Win l=Lin
+M6 (net35 VINN net21 net21) pch w=Win l=Lin
+M5 (VOUTP VCASCP net30 AVDD) pch w=WcasP l=LcasP
+M4 (net30 IB AVDD AVDD) pch w=8u l=1u
+M3 (net21 VCTRLP AVDD AVDD) pch w=Wcs_in l=Lcs_in
+M2 (net31 IB AVDD AVDD) pch w=8u l=1u
+M1 (VBN IB AVDD AVDD) pch w=W_side l=1u
+M0 (IB IB AVDD AVDD) pch w=17u l=1u
+M13 (VBN VBN AGND AGND) nch w=W_VB l=Lcm
+M12 (net34 VBN AGND AGND) nch w=Wcm l=Lcm
+M11 (VOUTN VCASCN net34 AGND) nch w=WcasN l=LcasN
+M10 (net35 VBN AGND AGND) nch w=Wcm l=Lcm
+M9 (VOUTP VCASCN net35 AGND) nch w=WcasN l=LcasN
