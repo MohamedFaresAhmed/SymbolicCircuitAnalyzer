@@ -10,17 +10,12 @@ This project provides a MATLAB-based symbolic circuit analysis tool. It automate
 
 \##Features
 
-Symbolic derivation of transfer functions between any chosen input and output nodes.
-
-Calculation of resistance, capacitance, and impedance at any specified node.
-
-Automated computation of poles, zeros, and frequency response.
-
-Support for both open-loop and closed-loop analysis.
-
-Matrix-based formulation for scalability to larger circuits.
-
-Extensible framework for adding new components or analysis methods.
+* Symbolic derivation of transfer functions between any chosen input and output nodes.
+* Calculation of resistance, capacitance, and impedance at any specified node.
+* Automated computation of poles, zeros, and frequency response.
+* Support for both open-loop and closed-loop analysis.
+* Matrix-based formulation for scalability to larger circuits.
+* Extensible framework for adding new components or analysis methods.
 
 
 
