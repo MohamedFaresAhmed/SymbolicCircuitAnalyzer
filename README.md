@@ -8,7 +8,7 @@ This project provides a MATLAB-based symbolic circuit analysis tool. It automate
 
 
 
-\## Features
+## Features
 
 \- Symbolic derivation of transfer functions between any chosen input and output nodes.
 
