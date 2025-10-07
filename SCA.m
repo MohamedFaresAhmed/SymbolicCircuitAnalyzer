@@ -4,50 +4,115 @@ tic;
 
 
 
-% Example Usage: simple common-source
+% % Example Usage: simple common-source
+%
+% % Create SCA instance
+% sca = SCA_new();
+% %sca = sca.set_debug(sca, true);
+%
+% mos_in = struct('gm',sym('gm_in'), 'ro',sym('ro_in'), 'cgs',sym('Cgs_in'),'cgd',sym('Cgd_in'));
+% %mos_tail = struct('gm',sym('gm_tail'), 'ro',sym('ro_tail'), 'cgs',sym('Cgs_tail'),'cgd',sym('Cgd_tail'));
+% % Build a simple common-source amplifier
+% sca = sca.add_mos(sca, 'M1', {'vout', 'vin', '0', '0'}, mos_in);
+% % sca = sca.add_mos(sca, 'M2', {'vout', 'v_bias', '0', 'vdd'}, mos_tail);
+% % sca = add_cap(sca, "Cgs", {'vin', '0'}, sym('Cgs'));
+% % sca = add_cap(sca, "Cgd", {'vin', 'vout'}, sym('Cgd'));
+%
+% % sca = sca.add_res(sca, 'Rsig', {'vsig', 'vin'}, 'Rsig');
+% sca = sca.add_res(sca, 'RL', {'vout', 'vdd'}, 'RL');
+% sca = sca.add_cap(sca, 'CL', {'vout', '0'}, 'CL');
+%
+% % sca = sca.add_cap(sca, 'CC', {'vout', 'vin'}, 'CC');
+%
+% % Define node role
+% sca = sca.define_node_role(sca, 'vdd','supply');
+%
+% % Define I/O
+% sca = sca.define_io(sca, {'vin'}, {'vout'}, 'vin');
+%
+% % Get transfer function
+% [H, sca] = sca.get_tf(sca, true);
+%
+%
+% % % Get DC gain
+% % Hdc = sca.get_dc_gain(sca, H);
+%
+% % Hdc_parallel = replace_parallel(Hdc);
+% % pretty(Hdc_parallel);
+%
+% % % Get poles and zeros
+% % [poles, zeros] = sca.get_poles_zeros(sca, H);
+% %
+% % Rin_sig = sca.res_looking_from_node(sca, 'vin');
+% %
+% % Cin_Vin = sca.cap_looking_from_node(sca, 'vin');
+% %
+% % Cin_Vout = sca.cap_looking_from_node(sca, 'vout');
+%
+%
+% typVals1 = struct('gm_in', 30e-6, 'ro_in', 300e3, 'RL', 10e3, ...
+%     'Cgs_in', 2e-15, 'Cgd_in', 0.1e-15, 'CL', 1e-12);
+%
+% % [simplified1, info1] = simplifyCircuitExpression(H, typVals1, 20);
+% % display_results(H, simplified1, info1);
+%
+% % [n, d] = numden(H);
+% % Create simplifier with threshold K
+% simplifier = expression_simplifier(typVals1, 20);
+%
+% % % Define a transfer function
+% % numerator = gm*ro*RL;
+% % denominator = 1 + s*Cgs*R + s*Cgd*ro + s*CL*RL + s^2*Cgs*CL*R*ro;
+%
+% % Simplify
+% simplified_transfer_function = simplify_tf(simplifier, H);
+%
+% % Display results
+% simplifier.display_results(simplifier, n, d, numSimp, denSimp);
+%
+% % Hdc_simplified = sca.get_dc_gain(sca, numSimp/denSimp);
+%
+% pretty(numSimp/denSimp);
+%
+% % Show netlist
+% sca.show_netlist(sca);
+% sca.validate_netlist(sca);
 
-% Create SCA instance
-sca = SCA_new();
-sca = sca.set_debug(sca, true);
 
-% Build a simple common-source amplifier
-sca = sca.add_mos(sca, 'M1', {'vout', 'vin', '0', '0'}, struct('gm',sym('gm_in'), 'ro',sym('ro_in'), 'cgs',sym('Cgs_in'),'cgd',sym('0')));
-% sca = sca.add_mos(sca, 'M2', {'vout', 'v_bias', '0', 'vdd'}, struct('gm',sym('gm_tail'), 'ro',sym('ro_tail'), 'cgs',sym('Cgs_tail'),'cgd',sym('Cgd_tail')));
-% sca = add_cap(sca, "Cgs", {'vin', '0'}, sym('Cgs'));
-% sca = add_cap(sca, "Cgd", {'vin', 'vout'}, sym('Cgd'));
-
-sca = sca.add_res(sca, 'Rsig', {'vsig', 'vin'}, 'Rsig');
-sca = sca.add_res(sca, 'RL', {'vout', 'vdd'}, 'RL');
-sca = sca.add_cap(sca, 'CL', {'vout', '0'}, 'CL');
-
-sca = sca.add_cap(sca, 'CC', {'vout', 'vin'}, 'CC');
-
-% Define node role
-sca = sca.define_node_role(sca, 'vdd','supply');
-
-% Define I/O
-sca = sca.define_io(sca, {'vsig'}, {'vout'}, 'vin');
-
-% Get transfer function
-[H, sca] = sca.get_tf(sca);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-% Get DC gain
-Hdc = sca.get_dc_gain(sca, H);
-Hdc_parallel = replace_parallel(Hdc);
-pretty(Hdc_parallel);
-% % Get poles and zeros
-% [poles, zeros] = sca.get_poles_zeros(sca, H);
+% syms s gm_in ro_in RL Cgs_in Cgd_in CL
 % 
-% Rin_sig = sca.res_looking_from_node(sca, 'vin');
+% % Parallel combination
+% Rout = (RL * ro_in) / (RL + ro_in);
 % 
-% Cin_Vin = sca.cap_looking_from_node(sca, 'vin');
+% % Transfer function (low-frequency gain + one-pole denominator)
+% num = expand(gm_in * Rout);
+% den = expand(1 + s * ((Cgs_in - CL)*Rout + Cgd_in*(RL + ro_in)));
 % 
-% Cin_Vout = sca.cap_looking_from_node(sca, 'vout');
-
-% Show netlist
-sca.show_netlist(sca);
-sca.validate_netlist(sca);
+% [num, den] = numden(num/den);
+% 
+% TF = num / den;
+% typVals = struct( ...
+%     'gm_in', 30e-6, ...       % 30 µS
+%     'ro_in', 300e3, ...       % 300 kΩ
+%     'RL', 10e3, ...           % 10 kΩ
+%     'Cgs_in', 2e-15, ...      % 2 fF
+%     'Cgd_in', 0.1e-15, ...    % 0.1 fF
+%     'CL', 1e-12 ...           % 1 pF
+%     );
+% 
+% 
+% % Create simplifier with threshold K
+% simplifier = expression_simplifier(typVals, 20);
+% 
+% % Simplify
+% simplified_tf = simplify_tf(simplifier, num/den);
+% 
+% % Hdc_simplified = sca.get_dc_gain(sca, simplified_tf);
+% 
+% % pretty(numSimp/denSimp);
 
 
 
@@ -62,10 +127,10 @@ sca.validate_netlist(sca);
 % syms Rsig RL ro gm gmb Cgs Cgd Cgb s
 %
 % % Signal source resistance
-% sca = sca.add_res(sca, 'Rsig', {'vsig', 'G'}, Rsig);
+% sca = add_res(sca, 'Rsig', {'vsig', 'G'}, Rsig);
 %
-% sca = sca.add_res(sca, 'RL', {'D', 'VDD'}, RL);
-% sca = sca.add_res(sca, 'ro', {'D', 'S'}, ro);
+% sca = add_res(sca, 'RL', {'D', 'VDD'}, RL);
+% sca = add_res(sca, 'ro', {'D', 'S'}, ro);
 %
 %
 % % Gate capacitances
@@ -73,34 +138,28 @@ sca.validate_netlist(sca);
 % sca = sca.add_cap(sca, 'Cgd', {'G', 'D'}, Cgd);
 % % sca = sca.add_cap(sca, 'Cgb', {'G', 'B'}, Cgb);
 %
-% % --- gm*vgs : VCCS from D->S controlled by V(G,S) ---
-% add_vccs(sca, 'gm_vgs', {'D','S'}, {'G','S'}, gm);
-%
-% % --- gmb*vbs : VCCS from D->S controlled by V(B,S) ---
-% add_vccs(sca, 'gmb_vbs', {'D','S'}, {'D','S'}, gmb);
-%
 % % Ground source, drain, bulk for simplicity
-% % sca = sca.add_res(sca, 'R_s', {'S','0'}, 0);  % AC ground
-% % sca = sca.add_res(sca, 'R_d', {'D','0'}, 0);
-% % sca = sca.add_res(sca, 'R_b', {'B','0'}, 0);
+% % sca = add_res(sca, 'R_s', {'S','0'}, 0);  % AC ground
+% % sca = add_res(sca, 'R_d', {'D','0'}, 0);
+% % sca = add_res(sca, 'R_b', {'B','0'}, 0);
 %
-% sca = sca.define_node_role(sca,'VDD','supply');
-% sca = sca.define_node_role(sca,'S','ground');
-% sca = sca.define_node_role(sca,'B','ground');
+% sca = define_node_role(sca,'VDD','supply');
+% sca = define_node_role(sca,'S','ground');
+% sca = define_node_role(sca,'B','ground');
 %
 % % Define I/O
-% sca = sca.define_io(sca, {'vsig'}, {'D'}, 'vin');
+% sca = define_io(sca, {'vsig'}, {'D'}, 'vin');
 %
 % % Get transfer function
-% H = sca.get_tf(sca, true);
+% H = get_tf(sca, true);
 %
 %
 % % Get DC gain
-% Hdc = sca.get_dc_gain(sca, H);
+% Hdc = get_dc_gain(sca, H);
 %
 %
 % % Now compute input impedance at Gate
-% Zin_gate = sca.imp_looking_from_node(sca, 'G');
+% Zin_gate = imp_looking_from_node(sca, 'G');
 
 
 
@@ -108,104 +167,131 @@ sca.validate_netlist(sca);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% %% 5T OTA
-% sca = SCA_new();
-%
-%
-%
-% % Symbolic role parameters (one symbol per role)
-% syms gm_in ro_in cgs_in cgd_in
-% syms gm_ld ro_ld cgs_ld cgd_ld
-% syms gm ro cgs cgd
-% syms gm_tail ro_tail cgs_tail cgd_tail
-% syms s Vin CL
-%
-%
-% % Define differential input (this will create +Vin/2 and -Vin/2 vsrcs)
-% % sca = sca.define_io(sca, {'in_p','in_n'}, {'out_p','out_n'}, 'Vin');
-%
-%
-% sca = sca.define_io(sca, {'in_p','in_n'}, {'out_p'}, 'Vin');
-%
-%
-%
-% % % Define vdd input (PSR Analysis)
-% % sca = sca.define_io(sca, {'vdd'}, {'out_p'}, 'Vin');
-%
-% mos = struct('gm',gm,'gmb',0,'ro',ro,'cgs',cgs,'cgd',0,'cgb',0,'cdb',0,'csb',0);
-%
-%
-% % Canonical pins: {D, G, S, B}
-% mos_in = struct('gm',gm_in,'gmb',0,'ro',ro,'cgs',cgs_in,'cgd',0,'cgb',0,'cdb',0,'csb',0);
-%
-% sca = sca.add_mos(sca,'M1', {'out_n' 'in_p','tail','0'}, mos_in);   % left input NMOS
-% sca = sca.add_mos(sca,'M2', {'out_p','in_n','tail','0'}, mos_in);   % right input NMOS (matched)
-%
-%
-% mos_ld = struct('gm',gm_ld,'gmb',0,'ro',ro,'cgs',cgs_ld,'cgd',0,'cgb',0,'cdb',0,'csb',0);
-% sca = sca.add_mos(sca,'M3', {'out_n','out_n','vdd','vdd'}, mos_ld);
-% sca = sca.add_mos(sca,'M4', {'out_p','out_n','vdd','vdd'}, mos_ld);
-%
-% % sca = sca.add_vsrc(sca,'Vbias_Load',{'mirror','vdd'}, 0);
-% % sca = sca.add_vsrc(sca,'Vbias_inn',{'in_n','0'}, 0);
-% % sca = sca.add_vsrc(sca,'Vbias_inp',{'in_p','0'}, 0);
-% % sca = sca.add_vsrc(sca,'Vbias_tail',{'tail_bias','0'}, 0);
-%
-%
-% % % TAIL DEVICE (M5)
-% % mos_tail = struct('gm',gm_tail,'gmb',0,'ro',ro_tail,'cgs',cgs_tail,'cgd',0,'cgb',0,'cdb',0,'csb',0);
-%
-% % sca = sca.add_mos(sca,'M5', {'tail','tail_bias','0','0'}, mos_tail);
-%
-% % sca = sca.add_isrc(sca,'Ibias',{'tail','0'}, 0);
-% sca = sca.add_res(sca,'RSS',{'tail','0'},sym('RSS'));
-%
-%
-% sca = sca.define_node_role(sca,'vdd','supply');
-% sca = sca.define_node_role(sca,'tail_bias','bias');
-%
-%
-%
-% % sca = sca.add_vsrc(sca,'VDD',{'vdd','0'}, 0);
-%
-%
-% sca = sca.add_cap(sca,'C1',{'out_p','0'},CL);
-% sca = sca.add_cap(sca,'C2',{'out_n','0'},CL);
-%
-%
-%
-% % Get transfer function
-% H = sca.get_tf(sca);
-%
-% % Get DC gain
-% Hdc = sca.get_dc_gain(sca, H);
-%
-% % % % Get common mode gain for differential input circuits
-% H_cm = get_cm_gain(sca);
-%
-% % % % Get DC common mode gain
-% Hdc = sca.get_dc_gain(sca, H_cm);
-%
+%% 5T OTA
+sca = SCA_new();
+
+
+
+% Symbolic role parameters (one symbol per role)
+syms gm_in ro_in cgs_in cgd_in
+syms gm_ld ro_ld cgs_ld cgd_ld
+syms gm ro cgs cgd
+syms gm_tail ro_tail cgs_tail cgd_tail
+syms s Vin CL
+
+
+% Define differential input (this will create +Vin/2 and -Vin/2 vsrcs)
+% sca = sca.define_io(sca, {'in_p','in_n'}, {'out_p','out_n'}, 'Vin');
+
+
+sca = define_io(sca, {'in_p','in_n'}, {'out_p'}, 'Vin');
+
+
+
+% % Define vdd input (PSR Analysis)
+% sca = define_io(sca, {'vdd'}, {'out_p'}, 'Vin');
+
+mos = struct('gm',gm,'gmb',0,'ro',ro,'cgs',cgs,'cgd',0,'cgb',0,'cdb',0,'csb',0);
+
+
+% Canonical pins: {D, G, S, B}
+mos_in = struct('gm',gm_in,'gmb',0,'ro',ro_in,'cgs',cgs_in,'cgd',0,'cgb',0,'cdb',0,'csb',0);
+
+sca = add_mos(sca,'M1', {'out_n' 'in_p','tail','0'}, mos_in);   % left input NMOS
+sca = add_mos(sca,'M2', {'out_p','in_n','tail','0'}, mos_in);   % right input NMOS (matched)
+
+
+mos_ld = struct('gm',gm_ld,'gmb',0,'ro',ro_ld,'cgs',cgs_ld,'cgd',0,'cgb',0,'cdb',0,'csb',0);
+sca = add_mos(sca,'M3', {'out_n','out_n','vdd','vdd'}, mos_ld);
+sca = add_mos(sca,'M4', {'out_p','out_n','vdd','vdd'}, mos_ld);
+
+% sca = add_vsrc(sca,'Vbias_Load',{'mirror','vdd'}, 0);
+% sca = add_vsrc(sca,'Vbias_inn',{'in_n','0'}, 0);
+% sca = add_vsrc(sca,'Vbias_inp',{'in_p','0'}, 0);
+% sca = add_vsrc(sca,'Vbias_tail',{'tail_bias','0'}, 0);
+
+
+% % TAIL DEVICE (M5)
+% mos_tail = struct('gm',gm_tail,'gmb',0,'ro',ro_tail,'cgs',cgs_tail,'cgd',0,'cgb',0,'cdb',0,'csb',0);
+
+% sca = add_mos(sca,'M5', {'tail','tail_bias','0','0'}, mos_tail);
+
+% sca = add_isrc(sca,'Ibias',{'tail','0'}, 0);
+sca = add_res(sca,'RSS',{'tail','0'},sym('RSS'));
+
+
+sca = define_node_role(sca,'vdd','supply');
+sca = define_node_role(sca,'tail_bias','bias');
+
+
+
+% sca = add_vsrc(sca,'VDD',{'vdd','0'}, 0);
+
+
+sca = add_cap(sca,'C1',{'out_p','0'},CL);
+sca = add_cap(sca,'C2',{'out_n','0'},CL);
+
+
+
+% Get transfer function
+H = get_tf(sca);
+
+% Get DC gain
+Hdc = get_dc_gain(sca, H);
+
+% % % Get common mode gain for differential input circuits
+H_cm = get_cm_gain(sca);
+
+% % % Get DC common mode gain
+Hdc_cm = get_dc_gain(sca, H_cm);
+
 % % Calculate resistance looking into node
-% Rin_out_p = sca.res_looking_from_node(sca, 'tail');
-%
+% Rin_out_p = res_looking_from_node(sca, 'tail');
+% 
 % % Calculate resistance looking into node
-% Rin_out_n = sca.res_looking_from_node(sca, 'out_n');
-%
-% % % Simplify symbolic transfer functions using typical values
-% % typical_values = struct('gm_ro', 50);
-% % level = 10;
-% % [H_simplified, info] = typicalValueSimplify(Hdc, typical_values, level);
+% Rin_out_n = res_looking_from_node(sca, 'out_n');
+
+% % Simplify symbolic transfer functions using typical values
+% typical_values = struct('gm_ro', 50);
+% level = 10;
+% [H_simplified, info] = typicalValueSimplify(Hdc, typical_values, level);
+
+% % Calculate capacitance looking into node
+% Cap_1 = cap_looking_from_node(sca, 'tail');
 %
 % % % Calculate capacitance looking into node
-% % Cap_1 = sca.cap_looking_from_node(sca, 'tail');
-% %
-% % % % Calculate capacitance looking into node
-% % Cap_2 = sca.cap_looking_from_node(sca, 'out_n');
-%
-% show_netlist(sca);
-%
-% valid = sca.validate_netlist(sca);
+% Cap_2 = cap_looking_from_node(sca, 'out_n');
+
+
+typVals = struct( ...
+    'gm_in', 30e-6, ...       % 30 µS
+    'ro_in', 1000e3, ...       % 300 kΩ
+    'RSS', 1000e3, ...         % 300 kΩ
+    'cgs_in', 2e-15, ...      % 2 fF
+    'cgd_in', 0.1e-15, ...    % 0.1 fF
+    'gm_ld', 30e-6, ...       % 30 µS
+    'ro_ld', 1000e3, ...       % 300 kΩ
+    'cgs_ld', 2e-15, ...      % 2 fF
+    'cgd_ld', 0.1e-15, ...    % 0.1 fF
+    'CL', 1e-12 ...           % 1 pF
+    );
+
+
+% Create simplifier with threshold K
+%simplifier = expression_simplifier(typVals, 20);
+
+% Simplify
+simplified_tf = simplify_tf(sca, Hdc, typVals, 20);
+
+%pretty(simplified_tf);
+
+% % Get poles and zeros
+% [poles, zeros] = get_poles_zeros(sca, simplified_tf);
+
+
+show_netlist(sca);
+
+valid = validate_netlist(sca);
 
 
 
@@ -213,56 +299,73 @@ sca.validate_netlist(sca);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % % Spectre Netlisting "" Two Stage Miller ""
-% 
+%
 % sca = SCA_new();
-% 
+%
 % % sca = sca.set_debug(sca, true);
-% 
+%
 % % Call your parser
 % sca = add_from_netlist_file(sca, 'Two_Stage_Miller_Netlist.txt');
-% 
+%
 % sca = sca.update_component_param(sca, 'M6', 'ro', 'ro/2');
-% 
+%
 % % sca = sca.update_component_param(sca, 'M4', 'ro', 'ro_4');
 % % sca = sca.update_component_param(sca, 'M4', 'gm', 'gm_4');
 % % sca = sca.update_component_param(sca, 'M2', 'gm', 'gm_2');
 % % sca = sca.update_component_param(sca, 'M2', 'ro', 'ro_2');
-% 
+%
 % sca = sca.define_io(sca, {'VINP', 'VINN'}, {'VOUT'}, 'Vin');
-% 
+%
 % % res_short = sca.add_res(sca,'R_SC',{'VOUT','VINN'},0);
-% 
+%
 % sca = sca.define_node_role(sca,'VDD','supply');
 % sca = sca.define_node_role(sca,'GND','ground');
-% 
+%
 % % Get transfer function
-% [H, sca] = sca.get_tf(sca);
-% 
+% [H, sca] = sca.get_tf(sca, true);
+%
 % % Get DC gain
 % Hdc = sca.get_dc_gain(sca, H);
-% 
+%
 % % % Get common mode gain for differential input circuits
 % % H_cm = get_cm_gain(sca);
 % %
 % % % Get DC common mode gain
 % % Hdc = sca.get_dc_gain(sca, H_cm);
-% 
-% 
+%
+%
 % % Calculate resistance looking into node
 % Rin_Vout = sca.res_looking_from_node(sca, 'VOUT');
-% 
+%
 % % Rin_out_FS = sca.res_looking_from_node(sca, 'net017');
-% 
+%
 % Cin_Vout1 = sca.imp_looking_from_node(sca, 'net017', true);
-% 
+%
 % Cin_Vout2 = sca.imp_looking_from_node(sca, 'VOUT', true);
-% 
-% % Get poles and zeros
-% [poles, zeros] = sca.get_poles_zeros(sca, H);
-% 
-% 
+%
+%
+%
+%
+% typVals = struct('gm', 30e-6, 'ro', 2e6, 'RZ', 10e3, ...
+%     'cgs', 2e-15, 'cgd', 0.1e-15, 'CL', 1e-12, 'CC', 0.2e-12);
+%
+%
+% [n, d] = numden(Hdc);
+% % Create simplifier with threshold K
+% simplifier = expression_simplifier(typVals, 10);
+%
+% % Simplify
+% [numSimp, denSimp] = simplify_tf(simplifier, Hdc);
+%
+% % Display results
+% simplifier.display_results(simplifier, Hdc, numSimp/denSimp);
+% pretty(numSimp/denSimp);
+%
+% % % Get poles and zeros
+% % [poles, zeros] = sca.get_poles_zeros(sca, numSimp/denSimp);
+%
 % sca.show_netlist(sca);
-% 
+%
 % valid = sca.validate_netlist(sca);
 
 
@@ -272,20 +375,20 @@ sca.validate_netlist(sca);
 %% Spectre Netlisting "" Folded Cascode ""
 
 % sca = SCA_new();
-% 
+%
 % % sca = sca.set_debug(sca, true);
-% 
+%
 % % Call your parser
 % sca = add_from_netlist_file(sca, 'Folded_Cascode_Netlist.txt');
-% 
+%
 % % Override MOSFET parameters
 % sca = update_component_param(sca, 'M10', 'ro', 'ro/2');
 % sca = update_component_param(sca, 'M12', 'ro', 'ro/2');
-% 
-% 
+%
+%
 % sca = sca.define_io(sca, {'VINP', 'VINN'}, {'VOUTP', 'VOUTN'}, 'Vin');
-% 
-% 
+%
+%
 % sca = sca.define_node_role(sca,'AVDD','supply');
 % sca = sca.define_node_role(sca,'AGND','ground');
 % sca = sca.define_node_role(sca,'VCASCP','bias');
@@ -293,31 +396,31 @@ sca.validate_netlist(sca);
 % sca = sca.define_node_role(sca,'IB','bias');
 % sca = sca.define_node_role(sca,'VBN','bias');
 % sca = sca.define_node_role(sca,'VCASCN','bias');
-% 
-% 
+%
+%
 % sca = sca.add_cap(sca,'C1',{'VOUTP','0'},sym('CL'));
 % sca = sca.add_cap(sca,'C1',{'VOUTN','0'},sym('CL'));
-% 
+%
 % % Get transfer function
 % H = sca.get_tf(sca);
-% 
+%
 % % Get DC gain
 % Hdc = sca.get_dc_gain(sca, H);
-% 
-% 
-% 
+%
+%
+%
 % % Get poles and zeros
 % [poles, zeros] = sca.get_poles_zeros(sca, H);
-% 
-% 
+%
+%
 % % Calculate resistance looking into node
 % Rin_out_p = sca.res_looking_from_node(sca, 'VOUTP');
-% 
+%
 % show_netlist(sca);
-% 
+%
 % valid = sca.validate_netlist(sca);
-% 
-% 
+%
+%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -537,9 +640,8 @@ sca.io_nodes = {}; % track IO nodes
 sca.roles = containers.Map(); % node roles (supply, etc.)
 sca.debug_mode = false; % for debugging output
 sca = classify(sca); % attach methods
-
 % analysis matrices (initialize empty)
-sca.matrices = {};
+sca.matrices = [];
 
 end
 
@@ -570,6 +672,19 @@ sca.update_component_param = @update_component_param;
 sca.show_netlist = @show_netlist;
 sca.validate_netlist = @validate_netlist;
 sca.set_debug = @set_debug;
+
+%%%%%%%%%%%%
+
+sca.group_by_s_power = @group_by_s_power;
+sca.get_power_of_s = @get_power_of_s;
+sca.prune_group_s = @prune_group_s;
+sca.extract_coefficient = @extract_coefficient;
+sca.evaluate_magnitude = @evaluate_magnitude;
+sca.reconstruct_expression = @reconstruct_expression;
+sca.display_results = @display_results;
+sca.count_terms = @count_terms;
+sca.map_to_struct = @map_to_struct;
+
 end
 
 
@@ -1394,7 +1509,7 @@ try
     if ~isempty(poles)
         pretty(poles);
     else
-        fprintf('No poles found (constant transfer function)\n\n');
+        fprintf('No poles found\n\n');
     end
     
     fprintf('Zeros:\n');
@@ -1465,15 +1580,6 @@ end
 
 end
 
-
-% Utility function
-function result = ternary(condition, true_val, false_val)
-if condition
-    result = true_val;
-else
-    result = false_val;
-end
-end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -1622,6 +1728,11 @@ fprintf('Capacitance looking into "%s":\n', node_name);
 pretty(Cin);
 
 end
+
+
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1956,642 +2067,322 @@ end
 
 
 
+
+
+function result = ternary(condition, true_val, false_val)
+if condition
+    result = true_val;
+else
+    result = false_val;
+end
+end
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 
 
-
-function [H_simplified, info] = typicalValueSimplify(H, typical_values, level)
-% TYPICALVALUESIMPLIFY - Simplify symbolic transfer functions using typical values
-%
-% Syntax: [H_simplified, info] = typicalValueSimplify(H, typical_values, level)
-%
-% Inputs:
-%   H - Symbolic transfer function H(s)
-%   typical_values - Structure with typical parameter values, e.g.,
-%                    struct('gm_ro', 50, 'RL', 1e4, 'CL', 1e-9)
-%   level - Negligibility level factor (default: 10)
-%
-% Outputs:
-%   H_simplified - Simplified transfer function
-%   info - Structure containing simplification details
+function simplified_transfer_function = simplify_tf(sca, transfer_function, typical_values, threshold)
 
 
-if nargin < 3
-    level = 10; % Default negligibility level
+% Simplify a transfer function H(s) = N(s) / D(s)
+% Args:
+%   transfer function: symbolic expression for transfer function
+%   typical_values: struct with typical component values
+%                  e.g., struct('gm', 100e-6, 'ro', 3e5, 'Cgs', 4e-15)
+%   threshold: Simplification threshold K (optional, default: 10)
+% Returns:
+%   numSimp: simplified numerator
+%   denSimp: simplified denominator
+
+
+if nargin < 4
+    threshold = 10;
 end
 
-% Initialize info structure
-info = struct();
-info.original_H = H;
-info.level = level;
-info.iterations = 0;
-info.terms_removed = {};
-info.common_factors_removed = {};
+% Step 1: Expand expressions
+[numerator, denominator] = numden(simplify(transfer_function));
+numExpanded = expand(numerator);
+denExpanded = expand(denominator);
 
-fprintf('Starting Typical Value Symbolic Simplification...\n');
-fprintf('Negligibility level: %g\n', level);
+% Step 2: Extract terms and group by power of s
+numGroups = sca.group_by_s_power(sca, numExpanded);
+denGroups = sca.group_by_s_power(sca, denExpanded);
 
-% Step 1: Decompose H(s) into numerator and denominator
-fprintf('\nStep 1: Decomposing H(s)...\n');
-[N, D] = numden(H);
-fprintf('Numerator N(s) = %s\n', char(N));
-fprintf('Denominator D(s) = %s\n', char(D));
+% Step 3: Evaluate magnitudes and prune within each group
+numPruned = sca.prune_group_s(sca, numGroups, typical_values, threshold);
+denPruned = sca.prune_group_s(sca, denGroups, typical_values, threshold);
 
-% Main iterative loop
-max_iterations = 20;
-for main_iter = 1:max_iterations
-    fprintf('\n=== Main Iteration %d ===\n', main_iter);
-    info.iterations = main_iter;
-    
-    % Store previous state for convergence check
-    N_prev = N;
-    D_prev = D;
-    
-    % Step 2-4: Expand, group, and simplify numerator
-    fprintf('\nSimplifying numerator...\n');
-    [N_grouped, N_terms] = expandAndGroupDimensional(N, typical_values);
-    [N, N_removed] = simplifyPolynomialTypical(N_grouped, typical_values, level);
-    
-    % Step 2-4: Expand, group, and simplify denominator
-    fprintf('\nSimplifying denominator...\n');
-    [D_grouped, D_terms] = expandAndGroupDimensional(D, typical_values);
-    [D, D_removed] = simplifyPolynomialTypical(D_grouped, typical_values, level);
-    
-    % Store removed terms info
-    if main_iter == 1
-        info.terms_removed.numerator = N_removed;
-        info.terms_removed.denominator = D_removed;
-    else
-        info.terms_removed.numerator = [info.terms_removed.numerator, N_removed];
-        info.terms_removed.denominator = [info.terms_removed.denominator, D_removed];
-    end
-    
-    % Step 5: Remove common factors
-    fprintf('\nRemoving common factors...\n');
-    [N, D, common_factors] = removeCommonFactors(N, D);
-    if ~isempty(common_factors)
-        fprintf('Removed common factors: %s\n', char(common_factors));
-        info.common_factors_removed{end+1} = common_factors;
-    end
-    
-    % Check for convergence
-    if isequal(N, N_prev) && isequal(D, D_prev)
-        fprintf('\nConverged after %d iterations\n', main_iter);
-        break;
-    end
-    
-    if main_iter == max_iterations
-        fprintf('\nReached maximum iterations (%d)\n', max_iterations);
-    end
+% Step 4: Reconstruct expressions
+numReconstructed = sca.reconstruct_expression(sca, numPruned);
+denReconstructed = sca.reconstruct_expression(sca, denPruned);
+
+% Step 5: Cancel common factors using GCD
+[numSimp, denSimp] = numden(simplifyFraction(numReconstructed/denReconstructed));
+simplified_transfer_function = numSimp/denSimp;
+% Step 6: Display original and simplified expressions
+sca.display_results(sca, transfer_function, simplified_transfer_function);
+
+
 end
 
-% Step 6: Reconstruct simplified transfer function
-fprintf('\nStep 6: Reconstructing simplified H(s)...\n');
-H_simplified = N / D;
-H_simplified = simplify(H_simplified);
 
-fprintf('\nSimplification complete!\n');
-fprintf('Original H = %s\n', char(H));
-fprintf('Simplified H = %s\n', char(H_simplified));
+function groups = group_by_s_power(sca, expr)
+% Group terms by their power of s
+% Returns: containers.Map with keys as power (integer) and values as cell arrays of terms
 
-% Calculate complexity reduction
-original_length = length(char(H));
-simplified_length = length(char(H_simplified));
-reduction_percent = (1 - simplified_length/original_length) * 100;
+groups = containers.Map('KeyType', 'double', 'ValueType', 'any');
 
-info.complexity_reduction = reduction_percent;
-fprintf('Complexity reduction: %.1f%%\n', reduction_percent);
-end
+% Convert expression to sum of terms
+expr = expand(expr);
 
-function [grouped_terms, all_terms] = expandAndGroupDimensional(poly, typical_values)
-% Expand polynomial and group terms by powers of s with dimensional analysis
+% Get all ADDITIVE terms using children only if expr is a sum
+% Check if expression is a sum by attempting to extract terms properly
+terms = {};
 
-syms s
+% Convert to string to check structure
+exprStr = char(expr);
 
-% Expand the polynomial
-expanded = expand(poly);
-
-% Convert to polynomial coefficients
-coeff_vec = coeffs(expanded, s);
-powers = 0:(length(coeff_vec)-1);
-
-% Initialize grouped terms structure
-grouped_terms = struct();
-all_terms = {};
-
-% Group terms by powers of s
-for i = 1:length(coeff_vec)
-    power = powers(i);
-    coeff = coeff_vec(i);
-    
-    % Skip zero coefficients
-    if coeff == 0
-        continue;
-    end
-    
-    % Decompose coefficient into individual terms if it's a sum
-    terms = extractTerms(coeff);
-    
-    % Apply dimensional grouping and parameter unification
-    terms = unifyParameters(terms, typical_values);
-    
-    power_key = sprintf('s%d', power);
-    if ~isfield(grouped_terms, power_key)
-        grouped_terms.(power_key) = {};
-    end
-    
-    % Add each term to the appropriate power group
-    for j = 1:length(terms)
-        grouped_terms.(power_key){end+1} = terms{j};
-        all_terms{end+1} = terms{j} * s^power;
-    end
-end
-
-fprintf('Grouped terms by powers of s:\n');
-fields = fieldnames(grouped_terms);
-for i = 1:length(fields)
-    fprintf('  %s: %d terms\n', fields{i}, length(grouped_terms.(fields{i})));
-end
-end
-
-function unified_terms = unifyParameters(terms, typical_values)
-% Unify parameters of the same type (e.g., treat all gm*ro as same entity)
-
-unified_terms = terms; % Start with original terms
-
-for i = 1:length(terms)
-    term = terms{i};
-    term_str = char(term);
-    
-    % Replace all gm*ro combinations with unified symbol
-    % This is a simplified approach - in practice, you'd want more sophisticated
-    % pattern matching for different parameter combinations
-    
-    % Example unifications (you can extend this):
-    % All gm*ro products -> gm_ro_unified
-    if contains(term_str, 'gm') && contains(term_str, 'ro')
-        % This is a simplified replacement - you may need more sophisticated parsing
-        unified_terms{i} = replacePairs(term, 'gm', 'ro', 'gm_ro_unified');
-        
-    end
-    
-    % All capacitors -> C_unified
-    if contains(term_str, 'C')
-        unified_terms{i} = replaceCapacitors(unified_terms{i});
-    end
-    
-    % All resistors -> R_unified
-    if contains(term_str, 'R') && ~contains(term_str, 'ro')
-        unified_terms{i} = replaceResistors(unified_terms{i});
-    end
-end
-end
-
-function new_term = replacePairs(term, param1, param2, unified_name)
-% Replace parameter pairs with unified symbol
-% This function finds all combinations of param1*param2 and replaces them
-
-% Convert to string for pattern matching
-term_str = char(term);
-
-% Create patterns to match
-patterns = {
-    [param1, '*', param2],...       % gm*ro
-    [param2, '*', param1],...       % ro*gm
-    [param1, param2],...            % gmro (without *)
-    [param2, param1]                % rogm (without *)
-    };
-
-% Replace all patterns with unified name
-new_term_str = term_str;
-for i = 1:length(patterns)
-    pattern = patterns{i};
-    new_term_str = strrep(new_term_str, pattern, unified_name);
-end
-
-% Convert back to symbolic
-new_term = str2sym(new_term_str);
-
-% Alternative approach using symbolic manipulation
-try
-    % Get all variables in the term
-    vars = symvar(term);
-    
-    % Find param1 and param2 variables
-    param1_vars = vars(contains(string(vars), param1));
-    param2_vars = vars(contains(string(vars), param2));
-    
-    if ~isempty(param1_vars) && ~isempty(param2_vars)
-        % Create substitution rules
-        subs_old = [];
-        subs_new = [];
-        
-        % Handle all combinations of param1*param2
-        for i = 1:length(param1_vars)
-            for j = 1:length(param2_vars)
-                pair_product = param1_vars(i) * param2_vars(j);
-                if has(term, pair_product)
-                    subs_old = [subs_old, pair_product];
-                    subs_new = [subs_new, sym(unified_name)];
-                end
-            end
-        end
-        
-        % Apply substitutions
-        if ~isempty(subs_old)
-            new_term = subs(term, subs_old, subs_new);
-        else
-            new_term = term;
-        end
-    else
-        new_term = term;
-    end
-catch
-    % If symbolic approach fails, use string replacement result
-    new_term = sym(new_term_str);
-end
-end
-
-function new_term = replaceCapacitors(term)
-% Replace all capacitor instances with unified symbol
-
-% Convert to string for analysis
-term_str = char(term);
-
-% Find all capacitor variables (assuming they start with 'C')
-vars = symvar(term);
-cap_vars = [];
-
-for i = 1:length(vars)
-    var_str = char(vars(i));
-    if startsWith(var_str, 'C') && length(var_str) > 1
-        % Check if it's likely a capacitor (C followed by numbers/letters)
-        if isstrprop(var_str(2), 'alphanum')
-            cap_vars = [cap_vars, vars(i)];
-        end
-    end
-end
-
-% Replace all capacitor variables with unified symbol
-if ~isempty(cap_vars)
-    subs_old = cap_vars;
-    subs_new = repmat(sym('C_unified'), size(cap_vars));
-    new_term = subs(term, subs_old, subs_new);
-else
-    new_term = term;
-end
-
-% Additional string-based replacement for common patterns
-new_term_str = char(new_term);
-common_cap_patterns = {'Cgs', 'Cgd', 'Cdb', 'Csb'};
-
-for i = 1:length(common_cap_patterns)
-    if contains(new_term_str, common_cap_patterns{i})
-        new_term_str = strrep(new_term_str, common_cap_patterns{i}, 'C_unified');
-    end
-end
-
-% Convert back to symbolic if changes were made
-if ~strcmp(char(new_term), new_term_str)
-    try
-        new_term = sym(new_term_str);
-    catch
-        % Keep original if conversion fails
-    end
-end
-end
-
-function new_term = replaceResistors(term)
-% Replace all resistor instances with unified symbol
-
-% Convert to string for analysis
-term_str = char(term);
-
-% Find all resistor variables (assuming they start with 'R' but not 'ro')
-vars = symvar(term);
-res_vars = [];
-
-for i = 1:length(vars)
-    var_str = char(vars(i));
-    if startsWith(var_str, 'R') && ~strcmp(var_str, 'ro') && ...
-            ~startsWith(var_str, 'ro_') && length(var_str) > 1
-        % Check if it's likely a resistor (R followed by numbers/letters)
-        if isstrprop(var_str(2), 'alphanum')
-            res_vars = [res_vars, vars(i)];
-        end
-    end
-end
-
-% Replace all resistor variables with unified symbol
-if ~isempty(res_vars)
-    subs_old = res_vars;
-    subs_new = repmat(sym('R_unified'), size(res_vars));
-    new_term = subs(term, subs_old, subs_new);
-else
-    new_term = term;
-end
-
-% Additional string-based replacement for common patterns
-new_term_str = char(new_term);
-common_res_patterns = {'Rload', 'Rin', 'Rout', 'Rbias'};
-
-for i = 1:length(common_res_patterns)
-    if contains(new_term_str, common_res_patterns{i})
-        new_term_str = strrep(new_term_str, common_res_patterns{i}, 'R_unified');
-    end
-end
-
-% Convert back to symbolic if changes were made
-if ~strcmp(char(new_term), new_term_str)
-    try
-        new_term = sym(new_term_str);
-    catch
-        % Keep original if conversion fails
-    end
-end
-end
-
-% Additional helper function for more sophisticated gm*ro replacement
-function unified_terms = replaceGmRoProducts(terms)
-% Specifically handle gm*ro products with better pattern matching
-
-unified_terms = cell(size(terms));
-
-for i = 1:length(terms)
-    term = terms{i};
-    
-    % Find all gm and ro variables
-    vars = symvar(term);
-    gm_vars = [];
-    ro_vars = [];
-    
-    for j = 1:length(vars)
-        var_str = char(vars(j));
-        if startsWith(var_str, 'gm')
-            gm_vars = [gm_vars, vars(j)];
-        elseif startsWith(var_str, 'ro')
-            ro_vars = [ro_vars, vars(j)];
-        end
-    end
-    
-    % Create all possible gm*ro combinations and replace them
-    new_term = term;
-    for gm_idx = 1:length(gm_vars)
-        for ro_idx = 1:length(ro_vars)
-            gm_ro_product = gm_vars(gm_idx) * ro_vars(ro_idx);
-            if has(new_term, gm_ro_product)
-                new_term = subs(new_term, gm_ro_product, sym('gm_ro_unified'));
-            end
-        end
-    end
-    
-    unified_terms{i} = new_term;
-end
-end
-
-function terms = extractTerms(expr)
-% Extract individual terms from a symbolic expression
-
-expr_str = char(expr);
-
-if contains(expr_str, '+') || (contains(expr_str, '-') && ~startsWith(strtrim(expr_str), '-'))
-    if has(expr, symvar(expr))
-        children_expr = children(expr);
-        if ~isempty(children_expr)
-            terms = num2cell(children_expr);
-        else
-            terms = {expr};
-        end
+% If contains + or -, it's a sum - use children
+if contains(exprStr, '+') || (contains(exprStr, '-') && ~strcmp(exprStr(1), '-'))
+    childTerms = children(expr);
+    if ~isempty(childTerms)
+        terms = childTerms;
     else
         terms = {expr};
     end
 else
+    % Single term
     terms = {expr};
 end
 
-% Convert to symbolic
+% Group each term by its power of s
 for i = 1:length(terms)
-    if ~isa(terms{i}, 'sym')
-        terms{i} = sym(terms{i});
-    end
-end
-end
-
-function [simplified_poly, removed_terms] = simplifyPolynomialTypical(grouped_terms, typical_values, level)
-% Simplify a polynomial by removing negligible terms using typical values
-
-syms s
-removed_terms = {};
-iteration = 0;
-
-while true
-    iteration = iteration + 1;
-    fprintf('  Iteration %d...\n', iteration);
+    term = terms(i);
+    power = sca.get_power_of_s(sca, term);
     
-    terms_removed_this_iter = false;
-    fields = fieldnames(grouped_terms);
-    
-    % Process each power group
-    for i = 1:length(fields)
-        power_key = fields{i};
-        terms = grouped_terms.(power_key);
-        
-        if length(terms) <= 1
-            continue; % Skip if only one term or empty
-        end
-        
-        fprintf('    Processing %s group with %d terms...\n', power_key, length(terms));
-        
-        % Evaluate terms using typical values
-        term_magnitudes = evaluateTermsTypical(terms, typical_values);
-        [dominant_idx, dominant_mag] = findDominantTermTypical(term_magnitudes);
-        
-        fprintf('      Dominant term: %s (magnitude: %g)\n', ...
-            char(terms{dominant_idx}), dominant_mag);
-        
-        % Prune negligible terms
-        terms_to_remove = [];
-        for j = 1:length(terms)
-            if j ~= dominant_idx
-                if term_magnitudes(j) * level < dominant_mag
-                    terms_to_remove = [terms_to_remove, j];
-                    removed_terms{end+1} = terms{j};
-                    terms_removed_this_iter = true;
-                    fprintf('        Removing negligible term: %s (mag: %g)\n', ...
-                        char(terms{j}), term_magnitudes(j));
-                end
-            end
-        end
-        
-        % Remove identified terms
-        terms(terms_to_remove) = [];
-        grouped_terms.(power_key) = terms;
-    end
-    
-    % Check if we should continue iterating
-    if ~terms_removed_this_iter
-        fprintf('  No more terms to remove. Stopping.\n');
-        break;
+    if isKey(groups, power)
+        termList = groups(power);
+        termList{end+1} = term;
+        groups(power) = termList;
+    else
+        groups(power) = {term};
     end
 end
 
-% Reconstruct polynomial from remaining terms
-simplified_poly = reconstructPolynomial(grouped_terms);
 end
 
-function magnitudes = evaluateTermsTypical(terms, typical_values)
-% Evaluate term magnitudes using typical values
 
-magnitudes = zeros(1, length(terms));
-param_names = fieldnames(typical_values);
+function power = get_power_of_s(sca, term)
+% Extract the power of s in a term
+% For example: 5*s^2*gm*ro -> returns 2
+%              gm*ro -> returns 0
+%              s*Cgs*R -> returns 1
 
+power = 0;
 
-for i = 1:length(terms)
-    term = terms{i};
-    
-    % Get all parameter substitutions
-    subs_vars = [];
-    subs_vals = [];
-    
-    
-    % Add parameter substitutions
-    for k = 1:length(param_names)
-        param_name = param_names{k};
-        
-        
-        % Handle normalized parameters
-        if strcmp(param_name, 'gm_ro')
-            % Substitute all gm*ro combinations with this value
-            subs_vars = [subs_vars, sym('gm_ro_unified')];
-            subs_vals = [subs_vals, typical_values.(param_name)];
-        else
-            subs_vars = [subs_vars, sym(param_name)];
-            subs_vals = [subs_vals, typical_values.(param_name)];
-        end
+if ~isa(term, 'sym')
+    term = sym(term);
+end
+
+% Check if term contains s
+if ~has(term, sca.s)
+    power = 0;
+    return;
+end
+
+% Collect polynomial in s
+try
+    p = polynomialDegree(term, sca.s);
+    if ~isempty(p) && ~isnan(p)
+        power = double(p);
+    else
+        power = 0;
     end
-    
+catch
+    % Fallback: try to extract power manually
     try
-        % Evaluate term magnitude
-        val = double(subs(term, subs_vars, subs_vals));
-        magnitudes(i) = abs(val);
-    catch
-        magnitudes(i) = 1; % Default value if evaluation fails
-        fprintf('      Warning: Could not evaluate term %s, using default magnitude\n', char(term));
-    end
-end
-end
-
-function [dominant_idx, dominant_mag] = findDominantTermTypical(magnitudes)
-% Find the dominant term (largest magnitude)
-
-[dominant_mag, dominant_idx] = max(magnitudes);
-end
-
-function [N_new, D_new, common_factors] = removeCommonFactors(N, D)
-% Remove common factors between numerator and denominator
-
-% Find GCD of numerator and denominator
-common_factors = gcd(N, D);
-
-if common_factors == 1 || common_factors == sym(1)
-    % No common factors
-    N_new = N;
-    D_new = D;
-    common_factors = [];
-else
-    % Remove common factors
-    N_new = simplify(N / common_factors);
-    D_new = simplify(D / common_factors);
-end
-end
-
-function poly = reconstructPolynomial(grouped_terms)
-% Reconstruct polynomial from grouped terms
-
-syms s
-poly = 0;
-
-fields = fieldnames(grouped_terms);
-for i = 1:length(fields)
-    power_key = fields{i};
-    power = str2double(power_key(2:end));
-    terms = grouped_terms.(power_key);
-    
-    % Sum all terms for this power
-    coeff_sum = 0;
-    for j = 1:length(terms)
-        coeff_sum = coeff_sum + terms{j};
-    end
-    
-    if coeff_sum ~= 0
-        poly = poly + coeff_sum * s^power;
-    end
-end
-
-if poly == 0
-    poly = sym(0);
-end
-end
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-
-function expr_out = replace_parallel(expr)
-    expr_out = mapSymType(expr, 'arith', @detect_replace_parallel);
-end
-
-
-function out = detect_replace_parallel(subexpr)
-
-    out = subexpr;   % default
-
-    [num, den] = numden(simplify(subexpr));
-    num_factors = factor(num);
-
-    % We need at least 2 factors in numerator
-    if numel(num_factors) < 2
-        return
-    end
-
-    % Try every pair/triple/... subset of factors as candidate "parallel set"
-    for k = 2:numel(num_factors)
-        combs = nchoosek(1:numel(num_factors), k);
-
-        for ci = 1:size(combs,1)
-            vars = unique(num_factors(combs(ci,:)));
-
-            % Test the identity: does subexpr / (product of leftover multipliers)
-            % equal parallel(vars)?
-            leftover = prod(num_factors(setdiff(1:numel(num_factors), combs(ci,:))));
-
-            test_expr = simplify(subexpr / leftover);
-
-            lhs = simplify(1/test_expr);
-            rhs = simplify(sum(1./vars));
-
-            if isequal(lhs,rhs)
-                args = strjoin(arrayfun(@char,vars,'UniformOutput',false), ',');
-                out = leftover * sym(['parallel(', args, ')']);
-                return
-            end
+        [~, powers] = coeffs(term, sca.s);
+        if ~isempty(powers)
+            power = double(max(powers));
         end
+    catch
+        power = 0;
     end
+end
 end
 
 
 
 
+function coefficient = extract_coefficient(sca, term)
+% Extract coefficient (everything except s^n)
+% For s^2*gm*Cgs*ro -> returns gm*Cgs*ro
+
+try
+    % Divide out the s power to get the coefficient
+    power = sca.get_power_of_s(sca, term);
+    if power > 0
+        coefficient = term / (sca.s^power);
+        coefficient = simplify(coefficient);
+    else
+        coefficient = term;
+    end
+catch
+    coefficient = term;
+end
+end
 
 
+function magnitude = evaluate_magnitude(sca, coefficient, typical_values)
+% Substitute typical values and compute magnitude
+
+if iscell(coefficient)
+    coefficient = coefficient{1};
+end
+
+% Get all symbolic variables in the coefficient
+vars = symvar(coefficient);
+
+% Build substitution
+subs_from = [];
+subs_to = [];
+
+for i = 1:length(vars)
+    varName = char(vars(i));
+    if strcmp(varName, 's')
+        continue;  % Never substitute s
+    end
+    
+    if isfield(typical_values, varName)
+        subs_from = [subs_from; vars(i)];
+        subs_to = [subs_to; typical_values.(varName)];
+    end
+end
 
 
+% Substitute and evaluate
+if ~isempty(subs_from)
+    result = subs(coefficient, subs_from, subs_to);
+else
+    result = coefficient;
+end
+
+%fprintf('%s\n', char(result));
+
+% Try to convert to double, handle case where symbolic vars remain
+try
+    magnitude = abs(double(result));
+catch
+    % If still symbolic (missing typical values), use a default or warning
+    warning('Could not evaluate magnitude for term: %s. Using magnitude = 1.0', char(coefficient));
+    magnitude = 1.0;  % Default fallback
+end
+
+end
+
+function prunedGroups = prune_group_s(sca, groups, typical_values, threshold)
+% Prune terms within each s-power group based on magnitude threshold
+% Returns: containers.Map with same structure but pruned terms
+
+prunedGroups = containers.Map('KeyType', 'double', 'ValueType', 'any');
+powerKeys = keys(groups);
+
+for i = 1:length(powerKeys)
+    power = powerKeys{i};
+    terms = groups(power);
+    
+    % Extract coefficients and compute magnitudes
+    magnitudes = zeros(1, length(terms));
+    coefficients = cell(1, length(terms));
+    
+    for j = 1:length(terms)
+        coefficients{j} = sca.extract_coefficient(sca, terms{j});
+        magnitudes(j) = sca.evaluate_magnitude(sca, coefficients{j}, typical_values);
+    end
+    
+    % Find dominant magnitude
+    dominantMag = max(magnitudes);
+    
+    % Prune based on threshold
+    keepIndices = magnitudes >= (dominantMag / threshold);
+    
+    % Always keep at least one term (the dominant)
+    if ~any(keepIndices)
+        [~, maxIdx] = max(magnitudes);
+        keepIndices(maxIdx) = true;
+    end
+    
+    % Store pruned terms
+    prunedGroups(power) = terms(keepIndices);
+end
+end
+
+function expr = reconstruct_expression(sca, groups)
+% Reconstruct symbolic expression from grouped terms
+
+expr = sym(0);
+powerKeys = keys(groups);
+
+for i = 1:length(powerKeys)
+    terms = groups(powerKeys{i});
+    for j = 1:length(terms)
+        expr = expr + terms{j};
+    end
+end
+
+expr = expand(expr);
+end
 
 
+function display_results(sca, tf_original, tf_simplified)
+% Display original and simplified expressions
 
+[numOriginal, denOriginal] = numden(tf_original);
+fprintf('\n=== Original Transfer Function ===\n');
+fprintf('H(s) = \n');
+disp(['  Numerator:   ', char(numOriginal)]);
+disp(['  Denominator: ', char(denOriginal)]);
+
+[numSimp, denSimp] = numden(tf_simplified);
+fprintf('\n=== Simplified Transfer Function ===\n');
+fprintf('H(s) = \n');
+disp(['  Numerator:   ', char(numSimp)]);
+disp(['  Denominator: ', char(denSimp)]);
+
+% Calculate reduction ratio (count terms in sum, not factors)
+numOrigTerms = sca.count_terms(sca, numOriginal);
+denOrigTerms = sca.count_terms(sca, denOriginal);
+numSimpTerms = sca.count_terms(sca, numSimp);
+denSimpTerms = sca.count_terms(sca, denSimp);
+
+fprintf('\n=== Simplification Statistics ===\n');
+fprintf('Numerator:   %d terms -> %d terms (%.1f%% reduction)\n', ...
+    numOrigTerms, numSimpTerms, 100*(1-numSimpTerms/numOrigTerms));
+fprintf('Denominator: %d terms -> %d terms (%.1f%% reduction)\n', ...
+    denOrigTerms, denSimpTerms, 100*(1-denSimpTerms/denOrigTerms));
+end
+
+function numTerms = count_terms(obj, expr)
+% Count number of terms in a sum (not factors in a product)
+expr = expand(expr);
+
+% Try to get children (terms in sum)
+terms = children(expr);
+
+if isempty(terms)
+    % No children means single term
+    numTerms = 1;
+else
+    % Check if children are from addition (terms) or multiplication (factors)
+    % If the expression rebuilt from sum of children equals original, they are terms
+    testSum = sum(terms(:));
+    if isequal(simplify(testSum - expr), sym(0))
+        numTerms = length(terms);
+    else
+        % Children are factors, not terms - single term
+        numTerms = 1;
+    end
+end
+end
